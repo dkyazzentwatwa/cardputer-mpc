@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": "glass-intro",
+  "pads": [
+    {"key": "q", "label": "KICK", "sample": "samples/intro/kick.wav", "volume": 230},
+    {"key": "w", "label": "LOUDK", "sample": "samples/intro/loud-kick.wav", "volume": 235},
+    {"key": "e", "label": "SN", "sample": "samples/intro/snare.wav", "volume": 220},
+    {"key": "r", "label": "CLAP", "sample": "samples/intro/clap.wav", "volume": 215},
+    {"key": "a", "label": "BCLAP", "sample": "samples/intro/big-spring-clap.wav", "volume": 215},
+    {"key": "s", "label": "SCLAP", "sample": "samples/intro/spring-clap.wav", "volume": 210},
+    {"key": "d", "label": "CHH", "sample": "samples/intro/hat-closed.wav", "volume": 185},
+    {"key": "f", "label": "OHH", "sample": "samples/intro/hat-open.wav", "volume": 180},
+    {"key": "z", "label": "SHAK", "sample": "samples/intro/shaker.wav", "volume": 180}
+  ]
+}
