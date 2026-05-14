@@ -1,6 +1,10 @@
 #include <M5Cardputer.h>
+#include <Preferences.h>
 #include <SPI.h>
 #include <SD.h>
+#include <esp_ota_ops.h>
+#include <esp_partition.h>
+#include <esp_system.h>
 #include "src/AudioEngine.h"
 #include "src/InputMap.h"
 #include "src/ProjectStore.h"
@@ -14,7 +18,40 @@ static Sequencer seq;
 static ProjectStore projects;
 static Ui ui;
 static bool sdReady = false;
-static const char* currentKit = "kits/starter.json";
+
+struct KitSlot {
+  const char* path;
+  const char* label;
+};
+
+static constexpr KitSlot kKits[] = {
+    {"kits/starter.json", "starter"},
+    {"kits/8bit.json", "8bit"},
+};
+static constexpr uint8_t kKitCount = sizeof(kKits) / sizeof(kKits[0]);
+static uint8_t currentKitIndex = 0;
+static const char* currentKit = kKits[currentKitIndex].path;
+
+static void returnToCypherOs(uint32_t delayMs = 250) {
+  Preferences prefs;
+  if (prefs.begin("cyputeros", false)) {
+    prefs.putBool("returnOnce", true);
+    prefs.putBool("bootToApp", false);
+    prefs.end();
+  }
+
+  const esp_partition_t* launcher = esp_partition_find_first(
+      ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, "app0");
+  if (!launcher) {
+    launcher = esp_partition_find_first(
+        ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, nullptr);
+  }
+  if (launcher) {
+    esp_ota_set_boot_partition(launcher);
+  }
+  if (delayMs > 0) delay(delayMs);
+  ESP.restart();
+}
 
 static void triggerPad(uint8_t pad, uint8_t velocity) {
   audio.trigger(pad, velocity);
@@ -40,16 +77,45 @@ static void loadDemoProject() {
     return;
   }
   Project project;
+  currentKitIndex = 0;
+  currentKit = kKits[currentKitIndex].path;
+  samples.loadKit(currentKit);
   if (projects.load("projects/demo-groove.json", project, samples)) {
     seq.setPattern(project.pattern);
-    currentKit = "kits/starter.json";
     ui.setStatus(projects.lastMessage());
   } else {
     ui.setStatus(projects.lastMessage());
   }
 }
 
+static void cycleKit() {
+  if (!sdReady) {
+    ui.setStatus("no SD");
+    return;
+  }
+
+  audio.panic();
+  seq.stop();
+  currentKitIndex = (currentKitIndex + 1) % kKitCount;
+  currentKit = kKits[currentKitIndex].path;
+  bool loaded = samples.loadKit(currentKit);
+
+  char status[32];
+  snprintf(status, sizeof(status), "kit %s", kKits[currentKitIndex].label);
+  ui.setStatus(loaded ? status : samples.lastMessage());
+  ui.force();
+}
+
 static void handleKey(char key, bool shift) {
+  if ((key == 'Q' || key == 'q') && shift) {
+    audio.panic();
+    seq.stop();
+    ui.setStatus("returning to Cypher OS");
+    ui.force();
+    returnToCypherOs();
+    return;
+  }
+
   if ((key == 'S' || key == 's') && shift) {
     saveCurrentProject();
     return;
@@ -164,9 +230,7 @@ static void handleKey(char key, bool shift) {
       break;
     case 'k':
     case 'K':
-      seq.stop();
-      samples.loadKit(currentKit);
-      ui.setStatus(samples.lastMessage());
+      cycleKit();
       break;
     case 'n':
     case 'N':

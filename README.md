@@ -33,11 +33,18 @@ Copy `sdcard/cardputer-mpc` to the root of the microSD card:
 ```text
 /cardputer-mpc/
   samples/
+    8bit/
   kits/starter.json
+  kits/8bit.json
   projects/demo-groove.json
 ```
 
 Samples must be PCM WAV, mono, 8-bit or 16-bit, at 16000 Hz or 22050 Hz. The loader preloads samples into internal RAM and rejects oversized files instead of trying risky live SD streaming.
+
+## Included Kits
+
+- `starter`: the default boot kit and demo groove target.
+- `8bit`: a generated 16-pad chiptune MPC pack with drums, perc, FX, bass, lead, chord, arp, and blip one-shots in mono 8-bit/16000 Hz WAV format. Run `python3 tools/generate_8bit_pack.py` to regenerate it.
 
 ## Controls
 
@@ -55,7 +62,8 @@ Samples must be PCM WAV, mono, 8-bit or 16-bit, at 16000 Hz or 22050 Hz. The loa
 - Shift + `-` / `=`: BPM down/up by 5
 - Shift + `s`: save `/cardputer-mpc/projects/cardputer-jam.json`
 - `l`: load `/cardputer-mpc/projects/demo-groove.json`
-- `k`: reload starter kit
+- Shift + `q`: return to Cypher OS when launched from its SD catalog
+- `k`: cycle kits: `starter` -> `8bit` -> `starter`
 - `n`: new blank pattern
 - Backspace or `` ` ``: panic/stop voices
 
